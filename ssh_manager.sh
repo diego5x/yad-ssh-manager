@@ -70,11 +70,33 @@ while true; do
 
     LISTA_DADOS=$(awk '
         BEGIN { icon="'"$ICON_SERVER"'" }
-        /^Host / { alias=$2; host=""; user=""}
-        /HostName/ { host=$2 }
-        /User/ { user=$2 }
-        /Port/ { port=$2 }
-        alias && host { print icon; print alias; print host; print user; print port; alias=""; host="" }
+
+        function print_block() {
+            if (alias && host) {
+                print icon
+                print alias
+                print host
+                print user
+                print port
+            }
+        }
+
+        /^[[:space:]]*Host[[:space:]]+/ {
+            print_block()
+            alias=$2
+            host=""
+            user=""
+            port=""
+        }
+
+        /^[[:space:]]*HostName[[:space:]]+/ { host=$2 }
+        /^[[:space:]]*User[[:space:]]+/     { user=$2 }
+        /^[[:space:]]*Port[[:space:]]+/     { port=$2 }
+
+        END {
+            print_block()
+        }
+
     ' "$CONFIG_FILE")
 
     SELECAO=$(echo "$LISTA_DADOS" | yad --list --title="SSH Manager Pro" \
